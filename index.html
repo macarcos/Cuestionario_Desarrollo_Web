@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador · Desarrollo Web</title>
+<style>
+  :root{
+    --azul:#2b3a67;
+    --azul2:#3f5185;
+    --naranja:#f26522;
+    --verde:#1e9e5a;
+    --verde-bg:#e7f6ee;
+    --rojo:#d64545;
+    --rojo-bg:#fbeaea;
+    --gris:#f4f5f8;
+    --gris2:#e4e7ee;
+    --texto:#2a2d34;
+    --sombra:0 4px 18px rgba(30,40,70,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:linear-gradient(160deg,#eef1f8 0%,#e3e8f4 100%);
+    color:var(--texto);
+    min-height:100vh;
+    padding:18px;
+    line-height:1.5;
+  }
+  .wrap{max-width:860px;margin:0 auto}
+  header.top{
+    background:#fff;border-radius:16px;padding:22px 24px;box-shadow:var(--sombra);
+    margin-bottom:18px;text-align:center;
+  }
+  header.top h1{color:var(--azul);font-size:1.55rem;letter-spacing:.3px}
+  header.top .logo{color:var(--naranja);font-weight:800}
+  header.top p{color:#6b7280;font-size:.92rem;margin-top:6px}
+
+  /* pantallas */
+  .screen{display:none}
+  .screen.active{display:block}
+
+  /* menu */
+  .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.menu-grid{grid-template-columns:1fr}}
+  .card{
+    background:#fff;border-radius:16px;padding:24px;box-shadow:var(--sombra);
+    cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;
+    border:2px solid transparent;
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(30,40,70,.16);border-color:var(--azul2)}
+  .card h2{color:var(--azul);font-size:1.15rem;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .card .tag{display:inline-block;background:var(--gris);color:var(--azul2);font-size:.75rem;
+    padding:3px 10px;border-radius:20px;margin-top:10px;font-weight:600}
+  .card p{color:#6b7280;font-size:.9rem;margin-top:8px}
+  .icon{font-size:1.4rem}
+
+  .sub-list{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .sub-btn{
+    background:var(--gris);border:1px solid var(--gris2);border-radius:10px;
+    padding:11px 14px;text-align:left;cursor:pointer;font-size:.92rem;color:var(--texto);
+    display:flex;justify-content:space-between;align-items:center;transition:.12s;
+  }
+  .sub-btn:hover{background:#eef1fb;border-color:var(--azul2)}
+  .sub-btn .n{background:var(--azul);color:#fff;border-radius:20px;font-size:.72rem;padding:2px 9px;font-weight:600}
+
+  /* quiz */
+  .quiz-head{
+    background:#fff;border-radius:14px;padding:16px 20px;box-shadow:var(--sombra);
+    margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+  }
+  .quiz-head h2{color:var(--azul);font-size:1.05rem}
+  .progress-wrap{flex-basis:100%;background:var(--gris2);height:8px;border-radius:8px;overflow:hidden}
+  .progress-bar{height:100%;background:linear-gradient(90deg,var(--naranja),#f5934e);width:0;transition:width .3s}
+  .counter{font-size:.85rem;color:#6b7280;font-weight:600}
+
+  .qcard{
+    background:#fff;border-radius:16px;padding:24px;box-shadow:var(--sombra);margin-bottom:14px;
+  }
+  .qnum{color:var(--naranja);font-weight:700;font-size:.8rem;letter-spacing:1px;text-transform:uppercase}
+  .qtext{font-size:1.08rem;font-weight:600;color:var(--texto);margin:8px 0 18px}
+  .qtext code{background:var(--gris);padding:2px 6px;border-radius:5px;font-size:.92em;color:#b03a2e;font-family:Consolas,monospace}
+  pre.code{background:#1e2233;color:#e6e6e6;padding:14px 16px;border-radius:10px;
+    font-family:Consolas,monospace;font-size:.86rem;overflow-x:auto;margin:6px 0 16px;white-space:pre}
+  .options{display:flex;flex-direction:column;gap:11px}
+  .opt{
+    border:2px solid var(--gris2);border-radius:12px;padding:13px 16px;cursor:pointer;
+    display:flex;gap:12px;align-items:flex-start;transition:.12s;background:#fff;font-size:.97rem;
+  }
+  .opt:hover{border-color:var(--azul2);background:#f8f9ff}
+  .opt .letter{
+    flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--gris);
+    color:var(--azul2);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.85rem;
+  }
+  .opt .txt{padding-top:2px}
+  .opt .txt code{background:var(--gris);padding:1px 5px;border-radius:4px;color:#b03a2e;font-family:Consolas,monospace}
+  .opt.correct{border-color:var(--verde);background:var(--verde-bg)}
+  .opt.correct .letter{background:var(--verde);color:#fff}
+  .opt.wrong{border-color:var(--rojo);background:var(--rojo-bg)}
+  .opt.wrong .letter{background:var(--rojo);color:#fff}
+  .opt.disabled{cursor:default;pointer-events:none}
+  .feedback{margin-top:14px;font-size:.9rem;font-weight:600;display:none}
+  .feedback.show{display:block}
+  .feedback.ok{color:var(--verde)}
+  .feedback.no{color:var(--rojo)}
+
+  .nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:6px}
+  .skip-row{display:flex;justify-content:flex-end;margin-top:4px}
+  .btn-skip{
+    background:transparent;border:1.5px solid var(--gris2);border-radius:20px;
+    padding:8px 18px;font-size:.85rem;font-weight:600;color:#8a92a3;cursor:pointer;
+    font-family:inherit;transition:.15s;
+  }
+  .btn-skip:hover{border-color:var(--azul2);color:var(--azul)}
+  .btn{
+    border:none;border-radius:12px;padding:12px 22px;font-size:.95rem;font-weight:600;
+    cursor:pointer;transition:.15s;font-family:inherit;
+  }
+  .btn-primary{background:var(--azul);color:#fff}
+  .btn-primary:hover{background:var(--azul2)}
+  .btn-ghost{background:#fff;color:var(--azul);border:1.5px solid var(--gris2)}
+  .btn-ghost:hover{border-color:var(--azul2)}
+  .btn-orange{background:var(--naranja);color:#fff}
+  .btn-orange:hover{background:#d9531a}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  /* resultado */
+  .result{background:#fff;border-radius:18px;padding:34px 26px;box-shadow:var(--sombra);text-align:center}
+  .result .score{font-size:3rem;font-weight:800;color:var(--azul)}
+  .result .score small{font-size:1.2rem;color:#9aa1ad}
+  .result .pct{font-size:1.1rem;color:var(--naranja);font-weight:700;margin:6px 0 4px}
+  .result .msg{color:#6b7280;margin:10px 0 22px}
+  .result .bar{background:var(--gris2);height:14px;border-radius:10px;overflow:hidden;margin:16px 0}
+  .result .bar > div{height:100%;border-radius:10px}
+
+  .footer{text-align:center;color:#9aa1ad;font-size:.8rem;margin-top:22px}
+  .back-link{display:inline-block;margin-bottom:14px;color:var(--azul2);cursor:pointer;font-size:.9rem;font-weight:600}
+  .back-link:hover{text-decoration:underline}
+  /* ===================== RESPONSIVE MÓVIL ===================== */
+  @media(max-width:600px){
+    body{padding:10px}
+    header.top{padding:16px 16px;border-radius:14px;margin-bottom:14px}
+    header.top h1{font-size:1.2rem}
+    header.top p{font-size:.82rem}
+
+    .card{padding:18px}
+    .card h2{font-size:1.05rem}
+
+    .quiz-head{padding:13px 15px}
+    .quiz-head h2{font-size:.95rem}
+    .badge-mode{font-size:.68rem}
+    .counter{font-size:.8rem}
+
+    .qcard{padding:18px 16px;border-radius:14px}
+    .qtext{font-size:1rem;margin:6px 0 14px}
+    pre.code{font-size:.78rem;padding:12px}
+
+    .opt{padding:14px 13px;font-size:.95rem;border-radius:11px}
+    .opt .letter{width:24px;height:24px;font-size:.8rem}
+    .feedback{font-size:.88rem}
+
+    .result{padding:26px 18px}
+    .result .score{font-size:2.4rem}
+    .result .nav-row .btn{padding:11px 16px;font-size:.9rem}
+  }
+  /* Botones táctiles cómodos y sin zoom accidental en iOS */
+  @media(hover:none){
+    .opt{min-height:52px;align-items:center}
+    .btn,.sub-btn,.btn-skip{-webkit-tap-highlight-color:transparent}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1><span class="logo">X</span> Simulador · Desarrollo Web</h1>
+    <p>Práctica de opción múltiple · UNEMI · [ISO08DW]</p>
+  </header>
+
+  <!-- ===================== MENÚ PRINCIPAL ===================== -->
+  <section id="menu" class="screen active">
+    <div class="menu-grid">
+      <div class="card" onclick="abrirSeccionWord()">
+        <h2><span class="icon">📘</span> Banco (Word)</h2>
+        <p>Las 110 preguntas consolidadas del documento, organizadas por las 9 unidades.</p>
+        <span class="tag" id="tagWord">110 preguntas · 9 unidades</span>
+      </div>
+      <div class="card" onclick="iniciarQuiz('imagenes')">
+        <h2><span class="icon">🖼️</span> Banco (Imágenes)</h2>
+        <p>Las 10 preguntas únicas del simulador que aparecen en las capturas de pantalla.</p>
+        <span class="tag" id="tagImg">10 preguntas</span>
+      </div>
+    </div>
+    <div class="footer">Elige un banco para practicar por separado.</div>
+  </section>
+
+  <!-- ===================== SUBMENÚ UNIDADES (WORD) ===================== -->
+  <section id="unidades" class="screen">
+    <span class="back-link" onclick="volverMenu()">← Volver al inicio</span>
+    <div class="card" style="cursor:default">
+      <h2><span class="icon">📘</span> Banco del Word — elige una unidad</h2>
+      <div class="sub-list" id="listaUnidades"></div>
+      <div style="margin-top:14px">
+        <button class="btn btn-orange" style="width:100%" onclick="iniciarQuiz('word-todo')">
+          🎯 Practicar TODAS las unidades (110 preguntas)
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== QUIZ ===================== -->
+  <section id="quiz" class="screen">
+    <span class="back-link" onclick="salirQuiz()">← Salir</span>
+    <div class="quiz-head">
+      <div>
+        <span class="badge-mode" id="modoBadge">Modo</span>
+        <h2 id="quizTitulo">Título</h2>
+      </div>
+      <span class="counter" id="contador">1 / 1</span>
+      <div class="progress-wrap"><div class="progress-bar" id="barra"></div></div>
+    </div>
+
+    <div class="qcard">
+      <div class="qnum" id="qnum">Pregunta 1</div>
+      <div class="qtext" id="qtext"></div>
+      <div id="qcode"></div>
+      <div class="options" id="opciones"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+
+    <div class="skip-row">
+      <button class="btn-skip" id="btnSaltar" onclick="avanzar()">Saltar →</button>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTADO ===================== -->
+  <section id="resultado" class="screen">
+    <div class="result">
+      <div class="score"><span id="aciertos">0</span><small>/<span id="total">0</span></small></div>
+      <div class="pct" id="porcentaje">0%</div>
+      <div class="bar"><div id="barraResultado"></div></div>
+      <div class="msg" id="mensajeResultado"></div>
+      <div class="nav-row" style="justify-content:center;gap:12px">
+        <button class="btn btn-ghost" onclick="volverMenu()">🏠 Inicio</button>
+        <button class="btn btn-primary" onclick="reintentar()">🔄 Reintentar</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =========================================================
+   BANCO DE PREGUNTAS
+   Cada pregunta: { u:"unidad", q:"enunciado", code:"opcional",
+                    o:["opc a","opc b",...], r:índiceCorrecta(0-based) }
+   ========================================================= */
+
+const UNIDADES = [
+  "Unidad 1 — Historia de Internet y La Web",
+  "Unidad 2 — HTML",
+  "Unidad 3 — CSS",
+  "Unidad 4 — JavaScript",
+  "Unidad 5 — React / Vite",
+  "Unidad 6 — Node.js, Express y APIs REST",
+  "Unidad 7 — Bases de Datos (SQL y NoSQL)",
+  "Unidad 8 — Autenticación, Autorización, JWT y OAuth",
+  "Unidad 9 — Arquitecturas de Software"
+];
+
+/* ---------- BANCO WORD (110 preguntas) ---------- */
+const WORD = [
+  // ---------- Unidad 1 ----------
+  {u:0,q:"¿En qué década se creó ARPANET, precursora de Internet?",o:["1950","1960","1980","1990"],r:1},
+  {u:0,q:"¿Qué problema detectaron los estrategas de EE.UU. durante la Guerra Fría respecto a las comunicaciones nucleares?",o:["Que los misiles eran muy lentos","Que no existían submarinos nucleares","Que no había suficientes aviones","Que los sistemas de comunicación eran vulnerables a un ataque"],r:3},
+  {u:0,q:"¿Qué empresa rechazó probar la red de Baran porque no creía en lo digital?",o:["AT&T","Bell Labs","Xerox","IBM"],r:0},
+  {u:0,q:"¿Quién propuso la idea de una red distribuida para resistir ataques nucleares?",o:["Tim Berners-Lee","Vint Cerf","Paul Baran","Leonard Kleinrock"],r:2},
+  {u:0,q:"¿Qué concepto técnico introdujo Paul Baran en su propuesta?",o:["Conmutación de paquetes","Fibra óptica submarina","Satélites artificiales","Multiplexado analógico"],r:0},
+  {u:0,q:"¿Cuál fue el primer protocolo usado en ARPANET antes de TCP/IP?",o:["SMTP","FTP","HTTP","NCP (Network Control Protocol)"],r:3},
+  {u:0,q:"¿Qué elemento actúa como \"servidor\" en la arquitectura cliente-servidor?",o:["El navegador web","El ordenador que almacena datos y responde solicitudes","La URL","El protocolo HTTP"],r:1},
+  {u:0,q:"En la URL https://www.ejemplo.com/productos/item123, ¿qué parte corresponde a \"productos/item123\"?",o:["Protocolo","Dominio","Ruta","Puerto"],r:2},
+  {u:0,q:"¿Qué método HTTP se recomienda usar al enviar los datos de un formulario de login?",o:["GET","POST","PUT","DELETE"],r:1},
+  {u:0,q:"¿Qué traduce el DNS durante la resolución de una URL?",o:["El dominio a una dirección IP","La IP a un dominio","El protocolo a HTTPS","La ruta a un puerto"],r:0},
+  {u:0,q:"En el flujo completo de una petición web, ¿qué ocurre justo después de la resolución DNS?",o:["El navegador renderiza el HTML","Se establece la conexión TCP/IP con el servidor","El servidor consulta la base de datos","Se envía la petición HTTP"],r:1},
+
+  // ---------- Unidad 2 ----------
+  {u:1,q:"¿Qué instrucción indica al navegador que renderice la página en modo estándar HTML5?",o:["<html>","<!DOCTYPE html>","<head>","<meta charset>"],r:1},
+  {u:1,q:"¿Qué etiqueta HTML5 debe usarse para el contenido principal único de una página, sin repetirse?",o:["<section>","<article>","<main>","<div>"],r:2},
+  {u:1,q:"¿Qué atributo vincula un <label> con su <input> correspondiente, siendo crítico para la accesibilidad?",o:["name","for / id","class","placeholder"],r:1},
+  {u:1,q:"¿Qué tipo de input HTML5 activa un teclado numérico en móviles y permite validar min/max?",o:["text","number","email","date"],r:1},
+  {u:1,q:"¿Cuál es el error más común en perfiles junior al estructurar documentos HTML?",o:["Usar demasiadas etiquetas semánticas","Usar exclusivamente <div> para toda la estructura","No usar JavaScript","Dejar el <head> vacío"],r:1},
+  {u:1,q:"¿Qué contiene principalmente el <head> de un documento HTML?",o:["El contenido visible para el usuario","Metadatos, título y enlaces a hojas de estilo","Los formularios de la página","Los scripts que deben ejecutarse tras el renderizado"],r:1},
+  {u:1,q:"¿Qué atributo HTML5 permite validar el valor de un input contra una expresión regular?",o:["required","pattern","minlength","autocomplete"],r:1},
+  {u:1,q:"¿Qué atributo facilita el autocompletado del navegador en formularios de login?",o:["autocomplete","placeholder","name","for"],r:0},
+
+  // ---------- Unidad 3 ----------
+  {u:2,q:"¿Qué selector CSS se usa para aplicar un estilo a un único elemento irrepetible en la página?",o:["Selector de etiqueta","Selector de clase","Selector de ID","Selector universal"],r:2},
+  {u:2,q:"¿Qué propiedad hace que el width de un elemento incluya el padding y el borde?",o:["display: flex","box-sizing: border-box","position: absolute","overflow: hidden"],r:1},
+  {u:2,q:"En Flexbox, ¿qué propiedad controla la alineación en el eje principal (horizontal por defecto)?",o:["align-items","justify-content","flex-direction","flex-wrap"],r:1},
+  {u:2,q:"¿Qué enfoque de diseño responsivo parte de estilos para pantallas pequeñas y añade complejidad para pantallas más grandes?",o:["Desktop-first","Mobile-first","Print-first","Tablet-first"],r:1},
+  {u:2,q:"¿Qué relación de contraste mínima recomienda WCAG AA para texto normal?",o:["2:1","3:1","4.5:1","7:1"],r:2},
+  {u:2,q:"¿Qué capa del modelo de caja es transparente y no tiene color propio?",o:["Contenido","Padding","Border","Margin"],r:3},
+  {u:2,q:"¿A partir de qué ancho aproximado suele añadirse una media query para adaptar el diseño a tablet en un enfoque mobile-first?",o:["480px","768px","1024px","1440px"],r:1},
+  {u:2,q:"¿Qué característica de CSS permite definir valores reutilizables (como colores o radios de borde) en un solo lugar?",o:["Flexbox","Variables CSS (custom properties)","Box-sizing","Selectores de ID"],r:1},
+  {u:2,q:"Según buenas prácticas de accesibilidad, ¿qué unidad se recomienda usar para el tamaño de fuente en lugar de px?",o:["em","rem","vh","pt"],r:1},
+
+  // ---------- Unidad 4 ----------
+  {u:3,q:"¿Cuál es la forma recomendada de incluir JavaScript en un proyecto real?",o:["Inline en atributos como onclick","Dentro de <script> en el <head> sin defer","Archivo externo enlazado con defer","Directamente en cada atributo HTML"],r:2},
+  {u:3,q:"¿Qué es el DOM?",o:["El archivo HTML original en disco","La representación en memoria del documento que crea el navegador","Un lenguaje de programación","Una librería de JavaScript"],r:1},
+  {u:3,q:"¿Qué método se utiliza para evitar que un formulario recargue la página al enviarse?",o:["e.stopPropagation()","e.preventDefault()","e.cancel()","e.stop()"],r:1},
+  {u:3,q:"¿Qué método de JavaScript se utiliza para crear un nuevo nodo HTML en memoria?",o:["appendChild()","createElement()","querySelector()","remove()"],r:1},
+  {u:3,q:"¿Cuál es la forma moderna recomendada de gestionar eventos en JavaScript?",o:["Atributo onclick=\"\" inline","addEventListener()","eval()","document.write()"],r:1},
+  {u:3,q:"¿Qué evento de JavaScript se dispara en un campo de texto mientras el usuario escribe en tiempo real?",o:["submit","click","input","change"],r:2},
+  {u:3,q:"En la manipulación dinámica del DOM, después de crear un elemento con createElement, ¿qué método se usa para insertarlo visualmente?",o:["remove()","appendChild()","querySelector()","addEventListener()"],r:1},
+
+  // ---------- Unidad 5 ----------
+  {u:4,q:"¿Quién creó la librería React?",o:["Google","Facebook (Meta)","Microsoft","Evan You"],r:1},
+  {u:4,q:"¿Qué concepto permite a React actualizar solo lo necesario en el DOM real, en lugar de repintar toda la página?",o:["JSX","Virtual DOM","Props","Hooks"],r:1},
+  {u:4,q:"¿Qué es JSX?",o:["Un framework CSS","Una sintaxis que permite escribir código similar a HTML dentro de JavaScript","Un gestor de paquetes","Un motor de base de datos"],r:1},
+  {u:4,q:"¿Qué herramienta ofrece arranque instantáneo y Hot Module Reload para proyectos React?",o:["Webpack","Vite","Postman","Mongoose"],r:1},
+  {u:4,q:"En React, ¿qué son las \"props\"?",o:["Variables globales del navegador","Parámetros de solo lectura pasados de un componente padre a un hijo","Métodos para conectar a bases de datos","Estilos CSS del componente"],r:1},
+  {u:4,q:"¿Qué hook de React se usa para gestionar el estado de un componente?",o:["useEffect","useState","useContext","useMemo"],r:1},
+  {u:4,q:"Según las buenas prácticas de organización de proyectos React, ¿a partir de cuántas líneas se recomienda dividir un componente?",o:["50","100","200","500"],r:1},
+  {u:4,q:"¿Qué describe mejor el flujo de actualización del Virtual DOM en React?",o:["React modifica siempre el DOM real directamente sin comparaciones","Cambio de estado → nuevo Virtual DOM → comparación (diffing) → actualización mínima del DOM real","El navegador repinta toda la página en cada cambio de estado","El Virtual DOM sustituye permanentemente al DOM real"],r:1},
+
+  // ---------- Unidad 6 ----------
+  {u:5,q:"¿Sobre qué motor está construido Node.js, lo que lo hace muy rápido?",o:["SpiderMonkey","V8 de Chrome","Chakra","JavaScriptCore"],r:1},
+  {u:5,q:"¿Qué característica de Node.js le permite atender miles de peticiones simultáneas con un solo hilo?",o:["Arquitectura multihilo","Non-blocking I/O (Event Loop)","Compilación estática","Uso exclusivo de bases de datos SQL"],r:1},
+  {u:5,q:"Según el ejemplo del Event Loop, ¿en qué orden aparece el resultado en consola?",code:'console.log("Inicio");\nsetTimeout(() => {\n  console.log("Proceso terminado");\n}, 0);\nconsole.log("Fin");',o:["Inicio, Proceso terminado, Fin","Proceso terminado, Inicio, Fin","Inicio, Fin, Proceso terminado","Fin, Inicio, Proceso terminado"],r:2},
+  {u:5,q:"¿Qué archivo garantiza la reproducibilidad de las versiones exactas de las dependencias instaladas?",o:["package.json","package-lock.json","node_modules","."],r:1},
+  {u:5,q:"¿Qué carpeta generada por NPM contiene el código de todas las dependencias y nunca se sube a Git?",o:["package.json","package-lock.json","node_modules/","src/"],r:2},
+  {u:5,q:"¿Qué comando de NPM instala una dependencia específicamente como dependencia de desarrollo?",o:["npm install express","npm init -y","npm install -D nodemon","npm install --global nodemon"],r:2},
+  {u:5,q:"En un servidor básico de Express, ¿qué hace específicamente la línea app.listen(3000)?",o:["Importa el módulo Express","Crea la instancia de la aplicación Express","Pone el servidor a escuchar en el puerto 3000, ejecutando el callback cuando está listo","Define las rutas HTTP del servidor"],r:2},
+  {u:5,q:"¿Qué framework de Node.js es el estándar de facto para construir APIs REST?",o:["Django","Express","Angular","Laravel"],r:1},
+  {u:5,q:"¿Qué significa específicamente que una API REST sea \"Stateless\"?",o:["Que no requiere autenticación","Que cada petición contiene toda la información necesaria","Que el servidor guarda el estado de cada cliente","Que no puede manejar múltiples usuarios"],r:1},
+  {u:5,q:"¿Qué característica de REST implica que \"cada entidad tiene su propia URL\" como por ejemplo /api/usuarios?",o:["Stateless","Cliente-Servidor","Recursos","Cacheable"],r:2},
+  {u:5,q:"Según los métodos HTTP de REST, ¿qué acción y ejemplo corresponden al método PUT?",o:["Consultar, GET /productos","Crear, POST /productos","Actualizar, PUT /productos/1","Eliminar, DELETE /productos/1"],r:2},
+  {u:5,q:"En una ruta de Express, ¿qué objeto contiene toda la información de la petición (body, parámetros, headers y query strings)?",o:["app","res (Response)","req (Request)","server"],r:2},
+  {u:5,q:"En Postman, ¿en qué pestaña se escribe el objeto JSON que se quiere enviar al servidor en una petición POST/PUT?",o:["Headers","Params","Body → raw → JSON","Authorization"],r:2},
+  {u:5,q:"¿Qué código de estado HTTP se usa cuando el cliente envió datos incorrectos o incompletos?",o:["200 OK","201 Created","400 Bad Request","404 Not Found"],r:2},
+  {u:5,q:"¿Qué código de estado HTTP se usa cuando un recurso se crea correctamente mediante POST?",o:["200","201","400","404"],r:1},
+  {u:5,q:"En una arquitectura backend organizada por capas, ¿en qué carpeta se centraliza la lógica de negocio, separada de rutas y controladores?",o:["routes/","controllers/","services/","models/"],r:2},
+  {u:5,q:"Según las buenas prácticas, ¿qué NO deberían hacer directamente los controladores?",o:["Recibir peticiones HTTP","Acceder directamente a la base de datos","Llamar a los servicios","Enviar respuestas al cliente"],r:1},
+  {u:5,q:"¿Cuál es la forma correcta de nombrar una ruta según las buenas prácticas vistas?",o:["/getEstudiante","/estudiantes (sustantivo en plural)","/obtener_estudiante","/EstudianteAPI"],r:1},
+  {u:5,q:"¿Qué middleware de Express se añade típicamente para evitar errores de CORS al conectar con un frontend React en otro puerto?",o:["express.json()","app.use(cors())","app.listen()","require('express')"],r:1},
+
+  // ---------- Unidad 7 ----------
+  {u:6,q:"¿Cuál es una ventaja crítica de PostgreSQL frente a MongoDB cuando se manejan transacciones financieras?",o:["Escalabilidad horizontal","Estructura flexible de documentos","Cumplimiento estricto de ACID","Menor necesidad de servidores"],r:2},
+  {u:6,q:"¿Cuál de los siguientes escenarios indica un mejor uso de MongoDB?",o:["Control de versiones de un banco","Datos de nómina con integridad estricta","Manejo de créditos hipotecarios","Un dashboard con estructuras de datos cambiantes"],r:3},
+  {u:6,q:"¿Qué comando corresponde a un \"Read\" en MongoDB?",o:["Usuario.find()","showTables","update usuario","select * from usuario"],r:0},
+  {u:6,q:"¿Cuál es el principal motivo por el que PostgreSQL se considera más adecuado para sistemas de gestión de inventarios complejos?",o:["Permite documentos anidados","No requiere diseño previo","Es más rápido en todas las operaciones CRUD","Garantiza integridad mediante relaciones"],r:3},
+  {u:6,q:"¿Qué sucede si un CRUD en MongoDB actualiza un campo inexistente?",o:["Se elimina el documento","Se agrega automáticamente el campo","El documento es ignorado","Genera error"],r:1},
+  {u:6,q:"¿Qué riesgo implica la flexibilidad de esquemas en MongoDB?",o:["Baja de velocidad de consultas","Falta de índices","No poder escalar","Redundancia de datos"],r:3},
+  {u:6,q:"¿Cuál de las siguientes es una característica de las bases de datos SQL como PostgreSQL?",o:["Esquema flexible sin estructura definida","Almacenan datos en tablas relacionales con esquema definido","Escalabilidad exclusivamente horizontal","No soportan transacciones"],r:1},
+  {u:6,q:"¿Qué significa la \"A\" en las propiedades ACID?",o:["Autorización","Atomicidad","Autenticación","Arquitectura"],r:1},
+  {u:6,q:"En MongoDB, ¿qué es un \"documento\"?",o:["Equivalente a una tabla completa","Equivalente a una fila SQL, con estructura anidada y flexible","Un archivo de configuración del servidor","Un tipo de índice"],r:1},
+  {u:6,q:"¿Qué librería de Node.js se usa comúnmente para conectar con PostgreSQL mediante un Pool de conexiones?",o:["mongoose","pg","express","jsonwebtoken"],r:1},
+  {u:6,q:"¿Cuál es la principal defensa contra la inyección SQL al hacer consultas con la librería pg?",o:["Concatenar directamente los strings del usuario","Usar parámetros posicionales ($1, $2)","Deshabilitar el uso de contraseñas","Usar únicamente GET en las rutas"],r:1},
+  {u:6,q:"¿Qué elemento de una tabla SQL identifica de forma única cada registro y puede relacionarse con otra tabla mediante una clave foránea?",o:["La clave primaria (PK)","El esquema","La colección","El registro"],r:0},
+  {u:6,q:"¿Qué propiedad ACID garantiza que una transacción confirmada persista incluso si el sistema falla después?",o:["Atomicidad","Consistencia","Aislamiento","Durabilidad"],r:3},
+  {u:6,q:"¿Cuál es la definición correcta de \"Aislamiento\" dentro de ACID?",o:["Todo o nada; si falla una operación se revierte la transacción completa","Las transacciones concurrentes no se interfieren entre sí","Una vez confirmada, la transacción persiste aunque el sistema falle","La base de datos nunca queda en estado corrupto"],r:1},
+  {u:6,q:"¿Cómo son escalables las bases de datos SQL como PostgreSQL?",o:["Horizontalmente, agregando más servidores","Verticalmente, aumentando las prestaciones del servidor","No son escalables","Mediante sharding automático"],r:1},
+
+  // ---------- Unidad 8 ----------
+  {u:7,q:"¿Cuál es la diferencia principal entre autenticación y autorización?",o:["Son sinónimos exactos","Autenticación verifica identidad; autorización determina qué puede hacer el usuario","Autorización verifica identidad; autenticación determina permisos","Ambas se refieren únicamente a JWT"],r:1},
+  {u:7,q:"¿Cuántas partes componen un JWT?",o:["2","3","4","5"],r:1},
+  {u:7,q:"¿Qué componente del JWT contiene los datos del usuario?",o:["Payload","Authority","Header","Hash"],r:0},
+  {u:7,q:"¿Qué hace la firma del token JWT?",o:["Impide expiración","Cifra todo el token","Oculta información sensible","Garantiza integridad y autenticidad"],r:3},
+  {u:7,q:"¿Por qué los JWT evitan el uso de sesiones en servidor?",o:["Porque se destruyen al cerrar el navegador","Porque contienen firma verificable sin estado","Porque se almacenan cifrados como cookies","Porque solo funcionan en redes privadas"],r:1},
+  {u:7,q:"En el flujo básico con JWT, ¿cuál es el primer paso del proceso?",o:["El servidor valida y genera un token","El token se envía al cliente","El usuario envía usuario y contraseña","El cliente lo guarda en localStorage"],r:2},
+  {u:7,q:"Según el flujo básico con JWT, ¿dónde suele guardar el cliente el token?",o:["En una cookie httpOnly obligatoriamente","En localStorage","En una variable de sesión del servidor","En un archivo .env"],r:1},
+  {u:7,q:"¿Qué representa el segundo argumento en la firma del token?",code:"jwt.sign({ userId: 1 }, 'claveSecreta', { expiresIn: '1h' });",o:["El payload del token","La clave usada para firmar el token","El tiempo de expiración","El identificador del usuario"],r:1},
+  {u:7,q:"¿Qué protocolo permite el login con Google o Facebook mediante acceso delegado?",o:["JWT","OAuth","SSH","FTP"],r:1},
+  {u:7,q:"¿Cuál es el flujo común de OAuth según lo visto en clase?",o:["Token → autorización → redirección → acceso","Autorización → redirección → token → acceso","Redirección → token → autorización → acceso","Acceso → token → autorización → redirección"],r:1},
+  {u:7,q:"¿Por qué Google Login es un ejemplo de OAuth y no de JWT?",o:["Porque permite acceso a recursos externos","Porque solo sirve para empresas","Porque no usa tokens","Porque no se basa en productos"],r:0},
+  {u:7,q:"Según la comparativa JWT vs OAuth, en el aspecto \"Tipo\", ¿cómo se clasifica cada uno?",o:["JWT es protocolo completo; OAuth es formato de token","JWT es formato de token; OAuth es protocolo completo de autorización","Ambos son formatos de token equivalentes","Ambos son protocolos completos de autorización"],r:1},
+  {u:7,q:"¿En qué header HTTP se envía habitualmente el token JWT en cada petición protegida?",o:["Content-Type","Authorization: Bearer <token>","Accept","X-Requested-With"],r:1},
+  {u:7,q:"En el ejemplo de gestión de roles, ¿qué código de estado HTTP se envía cuando el acceso es denegado?",code:"if (usuario.rol === 'admin') {\n  // acceso permitido\n} else {\n  res.status(???).send('Acceso denegado');\n}",o:["401","403","404","500"],r:1},
+
+  // ---------- Unidad 9 ----------
+  {u:8,q:"Según la diapositiva de \"Valores de un proyecto de software\", ¿cuál es la falencia del valor \"Comportamiento\"?",o:["Que no permite escalar el sistema","Que se presenta cuando el desarrollador solo escribe código y corrige bugs","Que ignora las especificaciones funcionales","Que depende exclusivamente de pruebas automatizadas"],r:1},
+  {u:8,q:"¿Qué significa literalmente \"software\" según lo visto en clase (Ware = Artículos, Soft = Suave)?",o:["Programa duro","Artículos suaves","Sistema flexible","Componente lógico"],r:1},
+  {u:8,q:"Cuando se presenta un cambio en el sistema, ¿a qué debe ser proporcional el esfuerzo de modificación?",o:["Al tamaño del equipo de desarrollo","Al presupuesto asignado","Al alcance del cambio planteado, no a la forma","A la cantidad de líneas de código existentes"],r:2},
+  {u:8,q:"Si un programa funciona perfectamente pero es IMPOSIBLE de cambiar, ¿qué ocurre según la diapositiva?",o:["Seguirá funcionando indefinidamente sin problema","Se vuelve inútil cuando los requisitos cambien","Se convierte automáticamente en legado","Requiere refactorización inmediata"],r:1},
+  {u:8,q:"En la descripción gráfica de arquitectura (View → Controller → Model → ORM → DB), ¿qué componente conecta el Model con la Base de Datos?",o:["Vista","Controller","ORM","Template"],r:2},
+  {u:8,q:"¿Cuál es la diferencia clave entre MVC clásico y el patrón MVT usado en Django?",o:["MVT no usa base de datos","En MVT, el controlador en la práctica es todo el entorno Django","MVT no tiene componente de vista","MVT solo se usa en aplicaciones móviles"],r:1},
+  {u:8,q:"En el patrón MVT, ¿qué elemento actúa como enlace entre el modelo y el template?",o:["Modelo","Vista","Controller","Base de datos"],r:1},
+  {u:8,q:"En el patrón MVT de Django, ¿qué componente decide cómo se muestra la información?",o:["Modelo","Vista","Template","Controlador"],r:2},
+  {u:8,q:"En el patrón MVT de Django, ¿qué componente hace las veces de \"controlador\", gestionando el enrutamiento?",o:["El propio framework Django","El Modelo","El Template","La base de datos"],r:0},
+  {u:8,q:"¿Qué caracteriza específicamente a la arquitectura Hexagonal?",o:["Divide la aplicación en microservicios independientes","Enfoca la aplicación en el dominio y usa adaptadores para interactuar con el exterior","Usa exclusivamente el patrón cliente-servidor","Requiere una única base de datos centralizada"],r:1},
+  {u:8,q:"En la arquitectura Hexagonal, los adaptadores de entrada se ejemplifican como:",o:["Bases de datos","Servicios en la nube","Interfaces de usuario","APIs externas de notificación"],r:2},
+  {u:8,q:"¿Qué patrón arquitectónico divide una aplicación en servicios pequeños e independientes que se comunican entre sí mediante APIs?",o:["Arquitectura hexagonal","Cliente-Servidor","Microservicios","MVT"],r:2},
+  {u:8,q:"Según la comparativa REST vs GraphQL, en cuanto a \"Consulta de datos\", REST se caracteriza por tener:",o:["Consultas flexibles","Respuestas fijas","Un solo endpoint","Ausencia de overfetching"],r:1},
+  {u:8,q:"¿Qué verbo HTTP en REST \"no modifica nada\" y es una operación de solo lectura?",o:["POST","PUT","DELETE","GET"],r:3},
+  {u:8,q:"Para obtener un usuario junto con sus cursos en REST, según el ejemplo comparativo, es necesario:",o:["Una sola petición GET","Realizar varias peticiones, como GET /usuarios/1 y GET /usuarios/1/cursos","Usar una query GraphQL","Modificar el esquema de la base de datos"],r:1},
+  {u:8,q:"¿Qué causa el underfetching en REST?",o:["Recibir datos de más","No usar HTTP","Requerir múltiples solicitudes","No usar GET"],r:2},
+  {u:8,q:"¿Qué problema resuelve GraphQL principalmente?",o:["Base de datos relacional","Rendimiento del backend","Consultas con datos exactos","Seguridad"],r:2},
+  {u:8,q:"¿Qué problema soluciona GraphQL frente a REST, relacionado con traer más datos de los necesarios?",o:["Underfetching","Overfetching","CORS","Autenticación"],r:1},
+  {u:8,q:"¿Cuál de los siguientes factores NO se menciona explícitamente en la diapositiva \"Importancia de la arquitectura de Software\"?",o:["Coste","Tiempo de desarrollo","Nivel de aislamiento","Lenguaje de programación utilizado"],r:3}
+];
+
+/* ---------- BANCO IMÁGENES (10 preguntas únicas de las capturas) ---------- */
+const IMAGENES = [
+  {q:"¿Cuál es la función principal de HTML dentro del desarrollo web?",o:["Ejecutar la lógica del servidor.","Aplicar estilos visuales a una página web.","Definir la estructura lógica y semántica del contenido.","Administrar bases de datos."],r:2},
+  {q:"¿Por qué se recomienda separar HTML y CSS en archivos diferentes?",o:["Porque JavaScript lo requiere obligatoriamente.","Porque mejora la organización, reutilización y mantenimiento del código.","Porque HTML deja de funcionar si están juntos.","Porque CSS únicamente funciona en archivos externos."],r:1},
+  {q:"¿Cuál es la principal función de CSS dentro del desarrollo web?",o:["Procesar solicitudes del servidor.","Almacenar información en una base de datos.","Definir la apariencia y presentación visual de una página web.","Ejecutar operaciones matemáticas."],r:2},
+  {q:"¿Cuál de las siguientes opciones representa una ventaja del uso de CSS?",o:["Elimina la necesidad de JavaScript.","Reemplaza los servidores web.","Permite modificar la apariencia de múltiples páginas desde un solo archivo.","Sustituye completamente HTML."],r:2},
+  {q:"¿Cuál es el principal beneficio de utilizar etiquetas semánticas como \"header\", \"main\", \"article\" y \"footer\"?",o:["Mejoran la organización del contenido, la accesibilidad y el posicionamiento en buscadores.","Reducen el tamaño de las imágenes.","Incrementan la velocidad del procesador.","Reemplazan completamente a CSS."],r:0},
+  {q:"Una empresa desarrolla un portal donde los usuarios únicamente pueden leer noticias. No existe inicio de sesión, formularios ni interacción. ¿Cómo se clasifica principalmente este sitio?",o:["Aplicación web empresarial.","Red cliente-servidor.","Sitio web estático.","Sistema distribuido."],r:2},
+  {q:"Un desarrollador crea una página utilizando únicamente etiquetas <div> para todo el contenido, incluyendo encabezados, navegación y artículos. ¿Cuál es la principal desventaja de esta decisión?",o:["HTML dejará de reconocer CSS.","Se pierde semántica, accesibilidad y optimización para motores de búsqueda.","JavaScript no podrá ejecutarse.","El sitio dejará de funcionar en Internet."],r:1},
+  {q:"Un estudiante escribe la dirección de una página web en el navegador y presiona Enter. ¿Qué sucede primero dentro de la arquitectura cliente-servidor?",o:["El servidor solicita información al cliente.","El cliente envía una petición al servidor.","El navegador crea automáticamente la página.","La base de datos responde directamente al usuario."],r:1},
+  {q:"¿Por qué Internet y la Web no son el mismo concepto?",o:["Porque Internet únicamente transporta imágenes.","Porque la Web es una aplicación que funciona sobre Internet.","Porque la Web apareció antes que Internet.","Porque Internet solo funciona en redes privadas."],r:1},
+  {q:"Un equipo de desarrollo desea facilitar el mantenimiento de un portal institucional con cientos de páginas. ¿Cuál de las siguientes prácticas contribuiría más a ese objetivo?",o:["Duplicar el código HTML en todas las páginas.","Mezclar CSS y JavaScript dentro de cada elemento HTML.","Escribir todo el contenido dentro de una sola etiqueta \"div\".","Utilizar etiquetas HTML semánticas para representar correctamente cada sección."],r:3}
+];
+
+/* =========================================================
+   LÓGICA DEL SIMULADOR
+   ========================================================= */
+let preguntas = [];      // set actual barajado
+let idx = 0;
+let respuestas = [];     // índice elegido por pregunta (o null)
+let modoActual = "";
+let tituloActual = "";
+
+function escapeHTML(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+// baraja también las opciones manteniendo cuál es la correcta
+function prepararPreguntas(lista){
+  return shuffle(lista).map(p=>{
+    const correcta = p.o[p.r];
+    const opciones = shuffle(p.o);
+    return {...p, o:opciones, r:opciones.indexOf(correcta)};
+  });
+}
+
+/* ---- navegación de pantallas ---- */
+function mostrar(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function volverMenu(){ mostrar("menu"); }
+
+/* ---- menú Word: construir lista de unidades ---- */
+function abrirSeccionWord(){
+  const cont = document.getElementById("listaUnidades");
+  cont.innerHTML = "";
+  UNIDADES.forEach((nombre,i)=>{
+    const n = WORD.filter(p=>p.u===i).length;
+    const b = document.createElement("button");
+    b.className = "sub-btn";
+    b.innerHTML = `<span>${escapeHTML(nombre)}</span><span class="n">${n}</span>`;
+    b.onclick = ()=>iniciarQuiz("word-unidad-"+i);
+    cont.appendChild(b);
+  });
+  mostrar("unidades");
+}
+
+/* ---- iniciar quiz según modo ---- */
+function iniciarQuiz(modo){
+  modoActual = modo;
+  let base = [];
+  if(modo==="imagenes"){ base = IMAGENES; tituloActual="Banco de Imágenes"; }
+  else if(modo==="word-todo"){ base = WORD; tituloActual="Banco del Word · Todas las unidades"; }
+  else if(modo.startsWith("word-unidad-")){
+    const u = parseInt(modo.split("-")[2],10);
+    base = WORD.filter(p=>p.u===u);
+    tituloActual = UNIDADES[u];
+  }
+  preguntas = prepararPreguntas(base);
+  respuestas = new Array(preguntas.length).fill(null);
+  idx = 0;
+  document.getElementById("modoBadge").textContent =
+    (modo==="imagenes") ? "🖼️ Imágenes" : "📘 Word";
+  document.getElementById("quizTitulo").textContent = tituloActual;
+  mostrar("quiz");
+  render();
+}
+
+/* ---- render de una pregunta ---- */
+function render(){
+  const p = preguntas[idx];
+  document.getElementById("qnum").textContent = "Pregunta "+(idx+1);
+  document.getElementById("qtext").innerHTML = escapeHTML(p.q);
+
+  // bloque de código si existe
+  const codeBox = document.getElementById("qcode");
+  codeBox.innerHTML = p.code ? `<pre class="code">${escapeHTML(p.code)}</pre>` : "";
+
+  // opciones
+  const cont = document.getElementById("opciones");
+  cont.innerHTML = "";
+  const letras = ["A","B","C","D","E","F"];
+  const yaResp = respuestas[idx];
+
+  p.o.forEach((op,i)=>{
+    const div = document.createElement("div");
+    div.className = "opt";
+    div.innerHTML = `<span class="letter">${letras[i]}</span><span class="txt">${escapeHTML(op)}</span>`;
+    if(yaResp!==null){
+      div.classList.add("disabled");
+      if(i===p.r) div.classList.add("correct");
+      if(i===yaResp && yaResp!==p.r) div.classList.add("wrong");
+    }else{
+      div.onclick = ()=>elegir(i);
+    }
+    cont.appendChild(div);
+  });
+
+  // feedback
+  const fb = document.getElementById("feedback");
+  if(yaResp!==null){
+    fb.classList.add("show");
+    if(yaResp===p.r){ fb.className="feedback show ok"; fb.textContent="✅ ¡Correcto!"; }
+    else{ fb.className="feedback show no"; fb.textContent="❌ Incorrecto. La respuesta correcta está marcada en verde."; }
+  }else{
+    fb.className="feedback"; fb.textContent="";
+  }
+
+  // barra + contador
+  document.getElementById("contador").textContent = (idx+1)+" / "+preguntas.length;
+  document.getElementById("barra").style.width = ((idx+1)/preguntas.length*100)+"%";
+
+  // botón saltar: visible solo mientras no se ha respondido
+  document.getElementById("btnSaltar").style.visibility = (yaResp!==null) ? "hidden" : "visible";
+}
+
+let avanzando = false;   // evita doble avance (clic + timer)
+
+function elegir(i){
+  if(respuestas[idx]!==null || avanzando) return;
+  respuestas[idx]=i;
+  render();
+  // avanzar solo después de 2 segundos para que se vea correcto/incorrecto
+  avanzando = true;
+  document.getElementById("btnSaltar").style.visibility = "hidden";
+  timerAvance = setTimeout(()=>{ avanzando=false; avanzar(); }, 2000);
+}
+
+let timerAvance = null;
+
+function avanzar(){
+  if(timerAvance){ clearTimeout(timerAvance); timerAvance=null; }
+  avanzando = false;
+  if(idx<preguntas.length-1){ idx++; render(); }
+  else finalizar();
+}
+function salirQuiz(){
+  if(confirm("¿Salir del quiz? Se perderá tu progreso actual.")){
+    if(timerAvance){ clearTimeout(timerAvance); timerAvance=null; }
+    avanzando=false;
+    volverMenu();
+  }
+}
+
+/* ---- resultado ---- */
+function finalizar(){
+  let ok = 0;
+  preguntas.forEach((p,i)=>{ if(respuestas[i]===p.r) ok++; });
+  const total = preguntas.length;
+  const pct = Math.round(ok/total*100);
+  document.getElementById("aciertos").textContent = ok;
+  document.getElementById("total").textContent = total;
+  document.getElementById("porcentaje").textContent = pct+"%";
+  const barra = document.getElementById("barraResultado");
+  barra.style.width = pct+"%";
+  barra.style.background = pct>=70 ? "var(--verde)" : (pct>=50 ? "#e0a800" : "var(--rojo)");
+  let msg;
+  if(pct>=90) msg="🏆 ¡Excelente! Dominas el tema.";
+  else if(pct>=70) msg="👍 Muy bien, vas por buen camino.";
+  else if(pct>=50) msg="📚 Aprobado justo. Repasa las que fallaste.";
+  else msg="💪 A seguir practicando, tú puedes.";
+  document.getElementById("mensajeResultado").textContent = msg;
+  mostrar("resultado");
+}
+function reintentar(){ iniciarQuiz(modoActual); }
+</script>
+</body>
+</html>
